@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:stable
+    container_name: nginx-proxmox
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "16443:16443"  # Kubernetes API proxy
+      - "7000:7000"    # Proxmox UI
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"  # Main config
+      - "./nginx-selfsigned.crt:/etc/nginx/certs/nginx-selfsigned.crt:ro"
+      - "./nginx-selfsigned.key:/etc/nginx/certs/nginx-selfsigned.key:ro"
+      - "./domains.map:/etc/nginx/domains.map:ro"  # Domain map
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+

@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:stable
+    container_name: nginx-proxmox
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "16443:16443"
+      - "7000:7000"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "./nginx-selfsigned.crt:/etc/nginx/certs/nginx-selfsigned.crt:ro"
+      - "./nginx-selfsigned.key:/etc/nginx/certs/nginx-selfsigned.key:ro"
+      - "./domains.map:/etc/nginx/domains.map:rw"  # ✅ changed to read-write
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mapper:
+    build: ./mapper
+    container_name: nginx-mapper
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    volumes:
+      - "./domains.map:/etc/nginx/domains.map:rw"  # ✅ same volume
+      - "/var/run/docker.sock:/var/run/docker.sock"      
+    environment:
+      - NGINX_CONTAINER=nginx-proxmox
+    depends_on:
+      - nginx
